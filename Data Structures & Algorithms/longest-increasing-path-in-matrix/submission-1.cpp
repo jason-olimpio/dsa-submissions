@@ -1,29 +1,50 @@
 class Solution {
 public:
-    bool isInterleave(string s1, string s2, string s3) {
-        int m = s1.size(), n = s2.size();
-        if (m + n != s3.size()) return false;
-        if (n < m) {
-            swap(s1, s2);
-            swap(m, n);
-        }
+    int longestIncreasingPath(vector<vector<int>>& matrix) {
+        int ROWS = matrix.size(), COLS = matrix[0].size();
+        vector<vector<int>> indegree(ROWS, vector<int>(COLS, 0));
+        vector<vector<int>> directions = {{-1, 0}, {1, 0},
+                                          {0, -1}, {0, 1}};
 
-        vector<bool> dp(n + 1, false);
-        dp[n] = true;
-        for (int i = m; i >= 0; i--) {
-            bool nextDp = (i == m ? true : false);
-            for (int j = n; j >= 0; j--) {
-                bool res = (j < n ? false : nextDp);
-                if (i < m && s1[i] == s3[i + j] && dp[j]) {
-                    res = true;
+        for (int r = 0; r < ROWS; ++r) {
+            for (int c = 0; c < COLS; ++c) {
+                for (auto& d : directions) {
+                    int nr = r + d[0], nc = c + d[1];
+                    if (nr >= 0 && nr < ROWS && nc >= 0 &&
+                        nc < COLS && matrix[nr][nc] < matrix[r][c]) {
+                        indegree[r][c]++;
+                    }
                 }
-                if (j < n && s2[j] == s3[i + j] && nextDp) {
-                    res = true;
-                }
-                dp[j] = res;
-                nextDp = dp[j];
             }
         }
-        return dp[0];
+
+        queue<pair<int, int>> q;
+        for (int r = 0; r < ROWS; ++r) {
+            for (int c = 0; c < COLS; ++c) {
+                if (indegree[r][c] == 0) {
+                    q.push({r, c});
+                }
+            }
+        }
+
+        int LIS = 0;
+        while (!q.empty()) {
+            int size = q.size();
+            for (int i = 0; i < size; ++i) {
+                auto [r, c] = q.front();
+                q.pop();
+                for (auto& d : directions) {
+                    int nr = r + d[0], nc = c + d[1];
+                    if (nr >= 0 && nr < ROWS && nc >= 0 &&
+                        nc < COLS && matrix[nr][nc] > matrix[r][c]) {
+                        if (--indegree[nr][nc] == 0) {
+                            q.push({nr, nc});
+                        }
+                    }
+                }
+            }
+            LIS++;
+        }
+        return LIS;
     }
 };
